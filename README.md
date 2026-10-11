@@ -1,102 +1,97 @@
 # Vision-Guided Car-Following Drone Simulation
 
-A ROS 2 Humble and Gazebo Classic simulation in which a Prius-style vehicle drives a figure-eight circuit and a simulated aerial drone uses a camera and roof-mounted ArUco marker **ID 7** to follow it.
+A ROS 2 and Gazebo Classic simulation in which a Prius-style vehicle travels on a figure-eight circuit and a simulated aerial drone uses computer vision to track an ArUco marker (`DICT_4X4_50`, ID `7`) mounted on the vehicle roof.
 
-> **Results policy:** performance percentages are not published until they have been measured from labeled detection examples and documented simulation trials. Replace the `Not yet measured` entries below only with outputs from the evaluation tools in this repository.
+> **Project status:** Working simulation prototype. The current follower has been reported to work better after tuning, but formal detection and whole-system benchmark results have not yet been collected. No accuracy percentages are claimed in this repository.
 
-## Project status
+## Highlights
 
-- **Simulation stack:** Ubuntu 22.04, ROS 2 Humble, Gazebo Classic 11 (recorded local environment).
-- **Target marker:** ArUco `DICT_4X4_50`, ID 7.
-- **Tracking camera:** `/drone/camera/image_raw`; the local configuration uses a 640 × 480 image and an 80° horizontal field of view.
-- **Detection output:** `/drone/car_detection` (`std_msgs/msg/Float32MultiArray`).
-- **Drone command topic:** `/drone/cmd_vel` (`geometry_msgs/msg/Twist`).
-- **Search behavior:** automatic search is intentionally disabled in the current follower configuration. If the marker is lost for a long interval, the follower can hold position rather than find the vehicle again.
+- **Vision-based target detection:** OpenCV ArUco detector configured for roof marker ID 7.
+- **Image-space following:** A ROS 2 follower converts normalized image-centre error into drone movement commands.
+- **Gazebo Classic simulation:** Prius-style vehicle, figure-eight environment, drone model and camera sensor.
+- **Inspectable ROS interfaces:** Detector output, raw camera stream and annotated debug image are exposed as ROS topics.
+- **Evaluation tooling:** Scripts and CSV templates are provided to calculate detection metrics and log full-system trials once ground-truth data is collected.
 
-## ROS packages
+## Demo media
 
-| Package | Role |
+Screenshots and a short demo recording have not yet been added to this repository. See [`docs/media/README.md`](docs/media/README.md) for suggested captures and filenames. Add your own recorded simulation media before presenting the project as a polished demo; do not use fabricated images or metrics.
+
+## Tested development environment
+
+| Component | Reference environment |
 |---|---|
-| `drone_description` | Drone Xacro/URDF, world, Gazebo models, spawn and controller launch files |
-| `drone_controller` | Drone flight/model-state controller |
-| `drone_tracker` | ArUco detector, follower and gimbal-related nodes |
-| `prius_description` | Prius URDF and marker/model assets |
-| `prius_adas_control` | Prius/ADAS worlds, configuration and launch files |
-| `car_lane_following` | Lane-detection and autonomous-driver source modules |
-| `prius_msgs` | Prius-related ROS messages |
+| OS | Ubuntu 22.04 |
+| Middleware | ROS 2 Humble |
+| Simulator | Gazebo Classic 11 |
+| Robot description | URDF / Xacro |
+| Vision | OpenCV ArUco via `cv2.aruco` and `cv_bridge` |
+| Build | `colcon` |
 
-## Architecture
+Gazebo Classic and image processing can run below real time on lower-powered computers. Actual camera throughput depends on CPU, GPU, world complexity and which viewer tools are open.
+
+## How it works
+
+1. The world and robot-description launch file starts Gazebo Classic and spawns the drone and Prius model.
+2. The drone's fixed camera publishes images on `/drone/camera/image_raw`.
+3. `car_detector` searches for ArUco ID 7 and publishes normalized marker location and bounding-box information.
+4. `drone_follow_controller` uses the detection to generate movement commands on `/drone/cmd_vel`.
+5. `drone_flight_controller` consumes the commands and updates the simulated drone state in Gazebo.
+
+See [the system architecture](docs/ARCHITECTURE.md) for a diagram and topic details.
+
+## Repository structure
 
 ```text
-Prius camera / lane-following stack
-                 │
-                 ▼
-       Prius follows circuit
-
-/drone/camera/image_raw
-                 │
-                 ▼
-        car_detector (ID 7)
-                 │
-                 ▼
-       /drone/car_detection
-                 │
-                 ▼
-     drone_follow_controller
-                 │
-                 ▼
-          /drone/cmd_vel
-                 │
-                 ▼
-      drone_flight_controller
-                 │
-                 ▼
-        Gazebo drone motion
+car_drone_ws/
+├── src/
+│   ├── car_lane_following/   # Lane-following source modules
+│   ├── drone_controller/    # Drone flight/model-state controller
+│   ├── drone_description/   # Drone URDF/Xacro, worlds and Gazebo model assets
+│   ├── drone_tracker/       # ArUco detector and drone-following controllers
+│   ├── prius_adas_control/  # Prius driving nodes, worlds and configuration
+│   ├── prius_description/   # Prius URDF and roof-marker assets
+│   └── prius_msgs/          # Prius-related ROS message definitions
+├── tools/                   # Evaluation utilities
+├── evaluation/              # CSV templates and evaluation instructions
+├── docs/                    # Architecture, results log and release guidance
+├── README.md
+├── CONTRIBUTING.md
+├── LICENSE
+└── THIRD_PARTY_NOTICES.md
 ```
-
-The detection array is published in this order:
-
-1. `detected` (0 or 1)
-2. normalized `center_x` (0 to 1)
-3. normalized `center_y` (0 to 1)
-4. normalized bounding-box width
-5. normalized bounding-box height
-6. size-based score (not a calibrated probability)
 
 ## Requirements
 
-The project was developed against the following environment; other versions may need adjustments:
-
-- Ubuntu 22.04
-- ROS 2 Humble
-- Gazebo Classic 11 and ROS-Gazebo integration packages
-- `colcon`, `rosdep`, Xacro, `cv_bridge`, ROS message packages, and OpenCV with the ArUco module (`cv2.aruco`)
-
-Install common dependencies if they are not already present:
+The primary development environment is Ubuntu 22.04 with ROS 2 Humble and Gazebo Classic 11. Install ROS 2 Humble following the official ROS installation guide, then install common project dependencies:
 
 ```bash
 sudo apt update
-sudo apt install python3-colcon-common-extensions python3-rosdep \
-  ros-humble-desktop ros-humble-gazebo-ros-pkgs ros-humble-xacro \
-  ros-humble-cv-bridge python3-opencv
+sudo apt install \
+  python3-colcon-common-extensions \
+  python3-rosdep \
+  ros-humble-desktop \
+  ros-humble-gazebo-ros-pkgs \
+  ros-humble-xacro \
+  ros-humble-cv-bridge \
+  python3-opencv
 ```
 
-If `rosdep` has been configured, install package dependencies from the workspace:
+Check that the Python OpenCV installation includes the ArUco module:
+
+```bash
+python3 -c 'import cv2; print("OpenCV:", cv2.__version__); print("ArUco available:", hasattr(cv2, "aruco"))'
+```
+
+If `rosdep` is initialized and package dependencies are available from configured sources, install workspace dependencies:
 
 ```bash
 cd ~/car_drone_ws
 rosdep install --from-paths src --ignore-src -r -y
 ```
 
-Some OpenCV builds put the ArUco module in `opencv-contrib`; verify it before launching:
+## Build the workspace
 
-```bash
-python3 -c 'import cv2; print(cv2.__version__); print("ArUco available:", hasattr(cv2, "aruco"))'
-```
-
-## Build
-
-From the workspace root:
+Clone this repository into `~/car_drone_ws` or use your existing workspace, then build:
 
 ```bash
 source /opt/ros/humble/setup.bash
@@ -105,15 +100,13 @@ colcon build --symlink-install
 source install/setup.bash
 ```
 
-If a build fails, resolve the reported missing dependency or package error rather than deleting source files or build directories at random.
+Source both the ROS distribution and workspace setup files in every new terminal used to run ROS commands.
 
-## Launching the simulation
+## Run the simulation
 
-The main drone spawn launch file is `drone_description/launch/spawn_drone.launch.py`; it configures Gazebo paths and references the drone Xacro, Prius URDF and `drone_follow.world`.
+Use separate terminals. The sequence below starts the simulation components separately and avoids duplicate nodes.
 
-Use separate terminals and source the workspace in each one. Do not start duplicate instances of the same node.
-
-**Terminal 1 — simulation/spawn:**
+### Terminal 1 — Start Gazebo and spawn the drone / Prius
 
 ```bash
 source /opt/ros/humble/setup.bash
@@ -121,7 +114,9 @@ source ~/car_drone_ws/install/setup.bash
 ros2 launch drone_description spawn_drone.launch.py
 ```
 
-**Terminal 2 — drone flight controller:**
+This launch uses `drone_follow.world`, the cinematic drone Xacro and `prius_no_lidar.urdf`. Wait for Gazebo and both models to spawn before starting the controllers.
+
+### Terminal 2 — Start the drone flight controller
 
 ```bash
 source /opt/ros/humble/setup.bash
@@ -129,7 +124,9 @@ source ~/car_drone_ws/install/setup.bash
 ros2 run drone_controller drone_flight_controller
 ```
 
-**Terminal 3 — marker detection and drone follower:**
+Run only one instance of this controller.
+
+### Terminal 3 — Start target detection and drone following
 
 ```bash
 source /opt/ros/humble/setup.bash
@@ -137,20 +134,49 @@ source ~/car_drone_ws/install/setup.bash
 ros2 launch drone_tracker drone_follow.launch.py
 ```
 
-The flight controller should only be started once. The follower launch starts `car_detector` and `drone_follow_controller`.
+This launch starts `car_detector` and `drone_follow_controller`.
 
-> **Vehicle-autonomy launch note:** the checked-in `prius_adas_control/launch/prius_adas_world.launch.py` comments describe it as starting Gazebo and the Prius only; they explicitly say it does not start lane detection or the autonomous driver. Do not assume it starts the full autonomous stack. Before claiming a one-command autonomous demo, verify and document the specific lane-detection/autonomous-driver launch sequence used in the working local setup.
+### Terminals 4 and 5 — Start Prius lane following
 
-## Useful topics
+The drone spawn launch does not itself start the separate lane-detection and autonomous-driver nodes. In the current workspace, these executables are provided by `prius_adas_control`:
 
-| Topic | Type | Purpose |
+Terminal 4:
+
+```bash
+source /opt/ros/humble/setup.bash
+source ~/car_drone_ws/install/setup.bash
+ros2 run prius_adas_control lane_detection
+```
+
+Terminal 5:
+
+```bash
+source /opt/ros/humble/setup.bash
+source ~/car_drone_ws/install/setup.bash
+ros2 run prius_adas_control autonomous_driver
+```
+
+If either command is unavailable after building, inspect the installed executables with `ros2 pkg executables prius_adas_control` rather than starting duplicate nodes or changing unrelated files. Launch composition may differ if you use a custom local launch file.
+
+## ROS topics
+
+| Topic | Message type | Description |
 |---|---|---|
-| `/drone/camera/image_raw` | `sensor_msgs/msg/Image` | Fixed drone camera stream used by detector |
-| `/drone/car_detection` | `std_msgs/msg/Float32MultiArray` | Marker-7 detection flag and normalized geometry |
-| `/drone/car_debug` | `sensor_msgs/msg/Image` | Annotated detector debug image |
-| `/drone/cmd_vel` | `geometry_msgs/msg/Twist` | Follower commands for the drone controller |
+| `/drone/camera/image_raw` | `sensor_msgs/msg/Image` | Fixed drone camera stream used by the detector |
+| `/drone/car_detection` | `std_msgs/msg/Float32MultiArray` | Detection flag, normalized centre, normalized box size and size-based score |
+| `/drone/car_debug` | `sensor_msgs/msg/Image` | Annotated detector debug view |
+| `/drone/cmd_vel` | `geometry_msgs/msg/Twist` | Movement commands sent by the follower |
 
-Inspect the current runtime graph with:
+The six entries in `/drone/car_detection` are ordered as:
+
+1. `detected` — `0` or `1`
+2. `center_x` — normalized horizontal centre (`0` to `1`)
+3. `center_y` — normalized vertical centre (`0` to `1`)
+4. `box_w` — normalized bounding-box width
+5. `box_h` — normalized bounding-box height
+6. `size_score` — marker-size heuristic, **not** a calibrated confidence probability
+
+Useful graph checks:
 
 ```bash
 ros2 node list
@@ -158,67 +184,71 @@ ros2 topic list
 ros2 topic info -v /drone/car_detection
 ```
 
-To inspect images, run `ros2 run rqt_image_view rqt_image_view` and select `/drone/car_debug` or `/drone/camera/image_raw` from the topic dropdown. `Ctrl+C` closes the viewer normally.
-
-## Evaluation: detection metrics
-
-Use images collected under representative distances, viewpoints, turns, lighting and marker occlusion. Assign a ground-truth label to each frame **before looking at or editing the model's predicted label** where practical. `ground_truth_id7=1` means ID 7 is visibly present and is considered detectable under the test protocol; `0` means it is absent or the frame is designated negative by the protocol. Fill `predicted_id7` with the detector's result for that same frame.
-
-Create a copy of `evaluation/detection_labels_template.csv`, populate it, and run:
+To inspect images:
 
 ```bash
-python3 tools/evaluate_detection.py evaluation/detection_labels.csv
+ros2 run rqt_image_view rqt_image_view
 ```
 
-The script reports:
+Choose `/drone/car_debug` or `/drone/camera/image_raw` in the image viewer. Close the viewer with `Ctrl+C` when finished; rendering an image viewer consumes additional resources.
 
-- Accuracy = `(TP + TN) / (TP + TN + FP + FN)`
-- Precision = `TP / (TP + FP)`
-- Recall = `TP / (TP + FN)`
-- Specificity = `TN / (TN + FP)`
-- F1 = `2 × precision × recall / (precision + recall)`
+## Configuration notes
 
-An undefined metric (for example, precision when there are no positive predictions) is reported as `N/A`, not zero. A high accuracy score alone can be misleading when positive and negative examples are imbalanced, so report precision, recall, F1 and the confusion counts alongside it.
+- The fixed camera is configured for a 640 × 480 image and an 80° horizontal field of view.
+- The target marker is ArUco `DICT_4X4_50`, ID 7, on the Prius roof.
+- Automatic search after long marker loss is intentionally disabled in the current follower behaviour. On extended loss, the drone may enter `HOLD` rather than search for the vehicle.
+- Detector processing was optimized to reduce repeated expensive fallback passes. Keep the working detector and controller together when testing changes.
 
-## Evaluation: overall following performance
+## Evaluation and results
 
-Detection accuracy and whole-system following success are different measures. Run a predefined set of trials and record the number of planned and completed laps, eligible tracking time, observed tracking time, marker-loss events and recovery time. Use a fresh copy of `evaluation/trial_results_template.csv` and run:
+**Detection accuracy and end-to-end success percentages are not yet measured.** The repository contains scripts and templates, not completed measurement datasets. Do not treat topic rate, CPU usage, or a successful individual demo run as detector accuracy.
+
+For a formal evaluation:
+
+1. Assemble representative images from straight segments, turns, image edges, changing distances and difficult visibility conditions.
+2. Independently label whether ID 7 is present and detectable in each frame, then compare those labels with the detector output.
+3. Run `tools/evaluate_detection.py` against the completed copy of `evaluation/detection_labels_template.csv`.
+4. Record repeated full-system trials in a copy of `evaluation/trial_results_template.csv` and run `tools/evaluate_trials.py`.
+5. Publish sample counts, test conditions, failure cases and calculated metrics together.
+
+See [`evaluation/README.md`](evaluation/README.md) and [`docs/RESULTS_LOG_TEMPLATE.md`](docs/RESULTS_LOG_TEMPLATE.md). Keep completed datasets and JSON reports outside the repository until reviewed for size and privacy; commit only selected, documented examples if needed.
+
+## Known limitations
+
+- The marker can intermittently disappear during turns or when it approaches the camera image edge.
+- Long detection loss can lead to `HOLD`; search is disabled in the current follower configuration.
+- Gazebo Classic may run below real time on lower-powered hardware, affecting sensor update timing.
+- The `size_score` field is a size-based heuristic, not a probability of correct detection.
+- The project has separate car lane-following and drone-following components; verify that all required nodes are started in your chosen launch sequence.
+
+## Troubleshooting
+
+**A package or executable is not found**
 
 ```bash
-python3 tools/evaluate_trials.py evaluation/trial_results.csv
+source /opt/ros/humble/setup.bash
+source ~/car_drone_ws/install/setup.bash
+ros2 pkg executables drone_tracker
+ros2 pkg executables drone_controller
+ros2 pkg executables prius_adas_control
 ```
 
-The tool reports lap completion rate, successful-trial rate, tracking availability, and average recovery time where those values can be computed. Define the test start/end conditions consistently and keep failed trials in the CSV.
+If a source or package manifest changed, rebuild the relevant packages or the full workspace and source `install/setup.bash` again.
 
-## Current results
+**The drone does not follow the car**
 
-| Metric | Result |
-|---|---|
-| Detection accuracy / precision / recall / F1 | **Not yet measured on a labeled dataset** |
-| Full-lap success rate | **Not yet measured with a documented trial set** |
-| Tracking availability | **Not yet measured** |
-| Mean marker reacquisition time | **Not yet measured** |
-| Local observed camera delivery rate | Varied substantially in recent tests; see project notes and measure again under a documented setup |
+Check that `/drone/camera/image_raw` publishes, `car_detector` is running, `/drone/car_detection` changes when ID 7 is in view, the follower is publishing `/drone/cmd_vel`, and exactly one drone flight controller is running.
 
-Do not replace these entries with estimates based only on console logs, CPU utilization or camera topic rate. Add dataset size, number of trials, lighting/view conditions and software/hardware versions when publishing results.
+**The simulation is slow**
 
-## Current limitations
+Close `rqt_image_view` when not needed, watch `gz stats`, and avoid starting duplicate nodes. Gazebo's real-time factor below `1.0` means simulation time is advancing slower than wall-clock time.
 
-- The marker detector can intermittently lose ID 7 during turns or when it approaches an image edge.
-- Long marker loss can cause the follower to enter `HOLD`; automatic search is currently disabled.
-- Gazebo Classic can run below real time on low-end hardware, affecting camera delivery and simulation timing.
-- The sixth detection array element is based on marker size and is **not a calibrated confidence probability**.
-- The autonomous lane-driving launch path should be verified for the exact environment before presenting the project as a one-command demo.
+## Licence and third-party assets
 
-## Repository hygiene
+Original project code intended for distribution under Apache License 2.0 is licensed under Apache-2.0; see [`LICENSE`](LICENSE).
 
-Generated `build/`, `install/` and `log/` folders are not source code and should not be committed. Keep the URDFs, worlds, textures, plugin assets required at runtime, launch files, package manifests and evaluation scripts. Check licenses for models, assets and the included Gazebo plugin before redistributing them publicly.
+Third-party packages, models, textures and binaries retain their applicable licences and notices. Review [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md) before redistributing any bundled assets, particularly the compiled Gazebo plugin. The top-level Apache licence does not automatically override third-party terms.
 
-## License
+## Contributing
 
-Original project code intended for distribution under Apache License 2.0
-is licensed under Apache-2.0; see [LICENSE](LICENSE).
-
-Third-party assets and components retain their applicable licences and
-notices. Review [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) before
-redistributing the bundled models, textures, or Gazebo plugin.
+See [`CONTRIBUTING.md`](CONTRIBUTING.md). Please keep changes focused, document how changes were tested, and do not claim benchmark results unless the measurements and conditions are recorded.
