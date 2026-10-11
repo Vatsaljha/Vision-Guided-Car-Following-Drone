@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="utf-8"?>
+<COLLADA xmlns="http://www.collada.org/2005/11/COLLADASchema"
+         version="1.4.1">
+  <asset>
+    <created>2026-10-11T00:00:00</created>
+    <modified>2026-10-11T00:00:00</modified>
+    <unit name="meter" meter="1"/>
+    <up_axis>Z_UP</up_axis>
+  </asset>
+  <library_images>
+    <image id="marker-image" name="marker-image">
+      <init_from>aruco_marker_textured.png</init_from>
+    </image>
+  </library_images>
+  <library_effects>
+    <effect id="marker-effect">
+      <profile_COMMON>
+        <newparam sid="marker-surface">
+          <surface type="2D"><init_from>marker-image</init_from></surface>
+        </newparam>
+        <newparam sid="marker-sampler">
+          <sampler2D><source>marker-surface</source></sampler2D>
+        </newparam>
+        <technique sid="common">
+          <lambert>
+            <diffuse>
+              <texture texture="marker-sampler" texcoord="UVSET0"/>
+            </diffuse>
+          </lambert>
+        </technique>
+      </profile_COMMON>
+    </effect>
+  </library_effects>
+  <library_materials>
+    <material id="marker-material" name="MarkerMaterial">
+      <instance_effect url="#marker-effect"/>
+    </material>
+  </library_materials>
+  <library_geometries>
+    <geometry id="marker-geometry" name="ArUcoMarker">
+      <mesh>
+        <source id="positions">
+          <float_array id="positions-array" count="12">
+            -0.39 -0.39 0
+             0.39 -0.39 0
+             0.39  0.39 0
+            -0.39  0.39 0
+          </float_array>
+          <technique_common>
+            <accessor source="#positions-array" count="4" stride="3">
+              <param name="X" type="float"/>
+              <param name="Y" type="float"/>
+              <param name="Z" type="float"/>
+            </accessor>
+          </technique_common>
+        </source>
+        <source id="uvs">
+          <float_array id="uv-array" count="8">
+            0 1  1 1  1 0  0 0
+          </float_array>
+          <technique_common>
+            <accessor source="#uv-array" count="4" stride="2">
+              <param name="S" type="float"/>
+              <param name="T" type="float"/>
+            </accessor>
+          </technique_common>
+        </source>
+        <vertices id="vertices">
+          <input semantic="POSITION" source="#positions"/>
+        </vertices>
+        <triangles material="marker-material" count="2">
+          <input semantic="VERTEX" source="#vertices" offset="0"/>
+          <input semantic="TEXCOORD" source="#uvs" offset="1" set="0"/>
+          <p>0 0 1 1 2 2 0 0 2 2 3 3</p>
+        </triangles>
+      </mesh>
+    </geometry>
+  </library_geometries>
+  <library_visual_scenes>
+    <visual_scene id="MarkerScene" name="MarkerScene">
+      <node id="MarkerNode" name="MarkerNode">
+        <instance_geometry url="#marker-geometry">
+          <bind_material>
+            <technique_common>
+              <instance_material symbol="marker-material"
+                                 target="#marker-material">
+                <bind_vertex_input semantic="UVSET0"
+                                   input_semantic="TEXCOORD"
+                                   input_set="0"/>
+              </instance_material>
+            </technique_common>
+          </bind_material>
+        </instance_geometry>
+      </node>
+    </visual_scene>
+  </library_visual_scenes>
+  <scene><instance_visual_scene url="#MarkerScene"/></scene>
+</COLLADA>

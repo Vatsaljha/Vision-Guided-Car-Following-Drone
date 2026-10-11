@@ -1,0 +1,20 @@
+controller_manager:
+  ros__parameters:
+
+    update_rate: 100
+
+    use_sim_time: true
+
+    joint_state_broadcaster:
+      type: joint_state_broadcaster/JointStateBroadcaster
+
+    gimbal_position_controller:
+      type: position_controllers/JointGroupPositionController
+
+
+gimbal_position_controller:
+  ros__parameters:
+
+    joints:
+      - gimbal_pan_joint
+      - gimbal_tilt_joint

@@ -1,0 +1,486 @@
+<?xml version="1.0"?>
+<robot name="drone" xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+  <!-- =========================
+       Base drone body
+       ========================= -->
+  <link name="base_link">
+
+    <inertial>
+      <origin xyz="0 0 0"/>
+      <mass value="1.5"/>
+      <inertia
+        ixx="0.02"
+        ixy="0.0"
+        ixz="0.0"
+        iyy="0.02"
+        iyz="0.0"
+        izz="0.03"/>
+    </inertial>
+
+    <visual>
+      <origin xyz="0 0 0"/>
+      <geometry>
+        <box size="0.6 0.6 0.15"/>
+      </geometry>
+      <material name="black">
+        <color rgba="0.08 0.08 0.08 1.0"/>
+      </material>
+    </visual>
+
+    <collision>
+      <origin xyz="0 0 0"/>
+      <geometry>
+        <box size="0.6 0.6 0.15"/>
+      </geometry>
+    </collision>
+
+    <!-- Keep the drone floating for this first spawn stage -->
+    <gazebo>
+      <gravity>false</gravity>
+    </gazebo>
+
+  </link>
+
+
+  <!-- =========================
+       Arm 1
+       ========================= -->
+  <link name="arm_front">
+    <visual>
+      <origin xyz="0 0 0"/>
+      <geometry>
+        <box size="1.2 0.08 0.08"/>
+      </geometry>
+      <material name="dark">
+        <color rgba="0.15 0.15 0.15 1.0"/>
+      </material>
+    </visual>
+  </link>
+
+  <joint name="arm_front_joint" type="fixed">
+    <parent link="base_link"/>
+    <child link="arm_front"/>
+    <origin xyz="0 0 0.0" rpy="0 0 0"/>
+  </joint>
+
+
+  <!-- =========================
+       Arm 2
+       ========================= -->
+  <link name="arm_side">
+    <visual>
+      <origin xyz="0 0 0"/>
+      <geometry>
+        <box size="0.08 1.2 0.08"/>
+      </geometry>
+      <material name="dark">
+        <color rgba="0.15 0.15 0.15 1.0"/>
+      </material>
+    </visual>
+  </link>
+
+  <joint name="arm_side_joint" type="fixed">
+    <parent link="base_link"/>
+    <child link="arm_side"/>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+  </joint>
+
+
+  <!-- =========================
+       Rotor helper macro
+       ========================= -->
+  <xacro:macro name="rotor" params="name x y">
+
+    <link name="${name}">
+
+      <visual>
+        <origin xyz="0 0 0"/>
+        <geometry>
+          <cylinder radius="0.13" length="0.025"/>
+        </geometry>
+        <material name="rotor_material">
+          <color rgba="0.02 0.02 0.02 1.0"/>
+        </material>
+      </visual>
+
+    </link>
+
+    <joint name="${name}_joint" type="fixed">
+      <parent link="base_link"/>
+      <child link="${name}"/>
+      <origin xyz="${x} ${y} 0.08" rpy="0 0 0"/>
+    </joint>
+
+  </xacro:macro>
+
+
+  <!-- Four rotors -->
+  <xacro:rotor name="rotor_front_left"  x="0.45"  y="0.45"/>
+  <xacro:rotor name="rotor_front_right" x="0.45"  y="-0.45"/>
+  <xacro:rotor name="rotor_rear_left"   x="-0.45" y="0.45"/>
+  <xacro:rotor name="rotor_rear_right"  x="-0.45" y="-0.45"/>
+
+
+  <!-- =========================
+       Camera link
+       ========================= -->
+  <link name="drone_camera_link">
+
+    <visual>
+      <origin xyz="0 0 0"/>
+      <geometry>
+        <box size="0.12 0.12 0.08"/>
+      </geometry>
+      <material name="camera_body">
+        <color rgba="0.1 0.1 0.8 1.0"/>
+      </material>
+    </visual>
+
+  </link>
+
+  <joint name="camera_joint" type="fixed">
+    <parent link="base_link"/>
+    <child link="drone_camera_link"/>
+    <!-- Move the fixed camera below and slightly forward of the body
+         to reduce the risk of the drone body obstructing its view. -->
+    <origin xyz="0.12 0 -0.30" rpy="0 1.40 0"/>
+  </joint>
+
+
+  <!-- =========================
+       Gazebo camera
+       ========================= -->
+  <gazebo reference="drone_camera_link">
+
+    <sensor name="drone_camera" type="camera">
+
+      <always_on>true</always_on>
+      <update_rate>15.0</update_rate>
+      <visualize>true</visualize>
+
+      <camera>
+
+        <horizontal_fov>1.3963</horizontal_fov>
+
+        <image>
+          <width>640</width>
+          <height>480</height>
+          <format>R8G8B8</format>
+        </image>
+
+        <clip>
+          <near>0.05</near>
+          <far>100.0</far>
+        </clip>
+
+      </camera>
+
+      <plugin
+        name="drone_camera_controller"
+        filename="libgazebo_ros_camera.so">
+
+        <ros>
+          <namespace>/drone</namespace>
+        </ros>
+
+        <camera_name>camera</camera_name>
+        <frame_name>drone_camera_link</frame_name>
+
+      </plugin>
+
+    </sensor>
+
+  </gazebo>
+    <!-- ========================================================= -->
+  <!--                 2-AXIS CAMERA GIMBAL                     -->
+  <!-- ========================================================= -->
+
+  <!-- ========================================================= -->
+  <!-- Gimbal base                                               -->
+  <!-- ========================================================= -->
+
+  <link name="gimbal_base_link">
+
+    <visual>
+      <origin xyz="0 0 0"/>
+      <geometry>
+        <cylinder radius="0.08" length="0.05"/>
+      </geometry>
+
+      <material name="gimbal_base_material">
+        <color rgba="0.15 0.15 0.15 1.0"/>
+      </material>
+    </visual>
+
+    <inertial>
+      <origin xyz="0 0 0"/>
+      <mass value="0.05"/>
+
+      <inertia
+        ixx="0.00002"
+        ixy="0"
+        ixz="0"
+        iyy="0.00002"
+        iyz="0"
+        izz="0.00002"/>
+    </inertial>
+
+  </link>
+
+
+  <!-- ========================================================= -->
+  <!-- Pan joint                                                  -->
+  <!-- ========================================================= -->
+
+  <joint name="gimbal_pan_joint"
+         type="revolute">
+
+    <parent link="base_link"/>
+    <child link="gimbal_base_link"/>
+
+    <origin
+      xyz="0.0 0.0 -0.22"
+      rpy="0 0 0"/>
+
+    <!-- vertical axis -->
+    <axis xyz="0 0 1"/>
+
+    <limit
+      lower="-3.14159"
+      upper="3.14159"
+      effort="2.0"
+      velocity="2.0"/>
+
+    <dynamics
+      damping="0.5"
+      friction="0.005"/>
+
+  </joint>
+
+
+  <!-- ========================================================= -->
+  <!-- Gimbal tilt frame                                         -->
+  <!-- ========================================================= -->
+
+  <link name="gimbal_tilt_link">
+
+    <visual>
+      <origin xyz="0 0 0"/>
+      <geometry>
+        <box size="0.16 0.12 0.08"/>
+      </geometry>
+
+      <material name="gimbal_frame_material">
+        <color rgba="0.20 0.20 0.20 1.0"/>
+      </material>
+    </visual>
+
+    <inertial>
+      <origin xyz="0 0 0"/>
+      <mass value="0.06"/>
+
+      <inertia
+        ixx="0.00003"
+        ixy="0"
+        ixz="0"
+        iyy="0.00003"
+        iyz="0"
+        izz="0.00003"/>
+    </inertial>
+
+  </link>
+
+
+  <!-- ========================================================= -->
+  <!-- Tilt joint                                                 -->
+  <!-- ========================================================= -->
+
+  <joint name="gimbal_tilt_joint"
+         type="revolute">
+
+    <parent link="gimbal_base_link"/>
+    <child link="gimbal_tilt_link"/>
+
+    <origin
+      xyz="0 0 -0.08"
+      rpy="0 0 0"/>
+
+    <!-- horizontal axis -->
+    <axis xyz="0 1 0"/>
+
+    <limit
+      lower="-1.35"
+      upper="0.35"
+      effort="2.0"
+      velocity="2.0"/>
+
+    <dynamics
+      damping="0.5"
+      friction="0.005"/>
+
+  </joint>
+
+
+  <!-- ========================================================= -->
+  <!-- Camera                                                     -->
+  <!-- ========================================================= -->
+
+  <link name="gimbal_camera_link">
+
+    <visual>
+      <origin xyz="0 0 0"/>
+      <geometry>
+        <box size="0.12 0.06 0.08"/>
+      </geometry>
+
+      <material name="gimbal_camera_material">
+        <color rgba="0.05 0.05 0.80 1.0"/>
+      </material>
+    </visual>
+
+    <inertial>
+      <origin xyz="0 0 0"/>
+      <mass value="0.03"/>
+
+      <inertia
+        ixx="0.00001"
+        ixy="0"
+        ixz="0"
+        iyy="0.00001"
+        iyz="0"
+        izz="0.00001"/>
+    </inertial>
+
+  </link>
+
+
+  <!-- Camera fixed to tilt frame -->
+
+  <joint name="gimbal_camera_joint"
+         type="fixed">
+
+    <parent link="gimbal_tilt_link"/>
+    <child link="gimbal_camera_link"/>
+
+    <origin
+      xyz="0.12 0.0 0.0"
+      rpy="0 1.5708 0"/>
+
+  </joint>
+
+
+  <!-- ========================================================= -->
+  <!-- Gazebo camera sensor                                      -->
+  <!-- ========================================================= -->
+
+  <gazebo reference="gimbal_camera_link">
+
+    <gravity>false</gravity>
+
+    <sensor
+      name="gimbal_camera_sensor"
+      type="camera">
+
+      <always_on>true</always_on>
+      <update_rate>1.0</update_rate>
+      <visualize>false</visualize>
+
+      <camera name="gimbal_camera">
+
+        <horizontal_fov>1.40</horizontal_fov>
+
+        <image>
+          <width>640</width>
+          <height>480</height>
+          <format>R8G8B8</format>
+        </image>
+
+        <clip>
+          <near>0.05</near>
+          <far>100.0</far>
+        </clip>
+
+      </camera>
+
+      <plugin
+        name="gimbal_camera_controller"
+        filename="libgazebo_ros_camera.so">
+
+        <ros>
+          <namespace>/drone</namespace>
+
+          <remapping>
+            image_raw:=gimbal_camera/image_raw
+          </remapping>
+
+          <remapping>
+            camera_info:=gimbal_camera/camera_info
+          </remapping>
+
+        </ros>
+
+        <camera_name>gimbal_camera</camera_name>
+        <frame_name>gimbal_camera_link</frame_name>
+
+        <hack_baseline>0.0</hack_baseline>
+
+      </plugin>
+
+    </sensor>
+
+  </gazebo>
+    <!-- ========================================================= -->
+  <!-- GIMBAL ROS 2 CONTROL                                      -->
+  <!-- ========================================================= -->
+
+  <ros2_control
+      name="GimbalSystem"
+      type="system">
+
+    <hardware>
+      <plugin>gazebo_ros2_control/GazeboSystem</plugin>
+    </hardware>
+
+    <joint name="gimbal_pan_joint">
+
+      <command_interface name="position"/>
+
+      <state_interface name="position"/>
+      <state_interface name="velocity"/>
+
+    </joint>
+
+    <joint name="gimbal_tilt_joint">
+
+      <command_interface name="position"/>
+
+      <state_interface name="position"/>
+      <state_interface name="velocity"/>
+
+    </joint>
+
+  </ros2_control>
+
+
+  <!-- ========================================================= -->
+  <!-- GAZEBO ROS 2 CONTROL PLUGIN                              -->
+  <!-- ========================================================= -->
+
+  <gazebo>
+
+    <plugin
+      name="gazebo_ros2_control"
+      filename="libgazebo_ros2_control.so">
+
+      <robot_param>robot_description</robot_param>
+      <robot_param_node>/drone/robot_state_publisher</robot_param_node>
+
+      <parameters>
+        $(find drone_description)/config/gimbal_controllers.yaml
+      </parameters>
+
+    </plugin>
+
+  </gazebo>
+</robot>

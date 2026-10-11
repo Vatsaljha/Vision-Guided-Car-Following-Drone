@@ -1,0 +1,30 @@
+# ROS 2 / colcon generated files
+/build/
+/install/
+/log/
+
+# Python caches and test artifacts
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Editors / OS
+.vscode/
+.idea/
+.DS_Store
+*.swp
+*~
+
+# Historical source snapshots and backups
+/backups/
+*.before*
+*backup*
+*.bak
+*.tar.gz
+
+# Runtime data (commit selected evaluation samples separately if useful)
+*.bag
+*.db3
+*.mcap
