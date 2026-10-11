@@ -1,4 +1,4 @@
-# Vision-Guided Car-Following Drone Simulation
+# Vision-Guided Car-Following Drone 
 
 A ROS 2 and Gazebo Classic simulation in which a Prius-style vehicle travels on a figure-eight circuit and a simulated aerial drone uses computer vision to track an ArUco marker (`DICT_4X4_50`, ID `7`) mounted on the vehicle roof.
 
