@@ -43,7 +43,6 @@ The drone uses its fixed camera to detect ArUco marker ID 7 on the car and follo
 - 🎯 **Fixed-camera visual following:** OpenCV ArUco detector looks for roof marker **ID 7** in `/drone/camera/image_raw`; an image-space follower turns marker location into drone movement commands.
 - 🚘 **Autonomous Prius motion:** `lane_detection` and `autonomous_driver` support car lane following in the cinematic test launch and may be started separately when using a launch path that does not start them.
 - 🛸 **Separate flight controller:** `drone_flight_controller` applies `/drone/cmd_vel` commands to the simulated drone.
-- 🧪 **Evaluation tools:** scripts and CSV templates are included. Detection accuracy and end-to-end success percentages remain **not yet measured** until labelled images and documented trials exist.
 
 ---
 
@@ -155,8 +154,6 @@ Use the topic list to identify the exact gimbal image/detection topics exposed b
 - Drone/camera movement coordinated from the simulator's target state.
 - Visual gimbal aiming via `gimbal_car_detector` and `autonomous_gimbal_controller`.
 - Cinematic tracking behaviour that does not rely on the fixed-camera follower's image-space control loop.
-
-This mode is not a measurement of fixed-camera detection precision or recall. Evaluate its shot-following success separately.
 
 ---
 
@@ -371,8 +368,6 @@ car_drone_ws/
 │   ├── ARCHITECTURE.md
 │   ├── RESULTS_LOG_TEMPLATE.md
 │   └── media/                  # Add screenshots/demo links here
-├── evaluation/                 # CSV templates and evaluation instructions
-├── tools/                      # Evaluation scripts
 └── src/
     ├── car_lane_following/     # Supporting lane-following source
     ├── drone_controller/       # Gazebo drone movement controller
@@ -382,17 +377,6 @@ car_drone_ws/
     ├── prius_description/      # Prius URDF and ArUco roof-marker assets
     └── prius_msgs/             # Prius-related ROS message definitions
 ```
-
-## 📊 Evaluation status
-
-| Metric | Current status |
-|---|---|
-| Mode 2 detector precision / recall / F1 | **Not yet measured on a labelled dataset** |
-| Mode 2 end-to-end lap/trial success | **Not yet measured using documented trials** |
-| Marker tracking availability and reacquisition time | **Not yet measured** |
-| Mode 1 cinematic-shot completion/smoothness | **Not yet measured using a defined shot protocol** |
-
-Evaluation tools and CSV templates are included. Do not enter guessed percentages. Keep Mode 1 and Mode 2 results separate because one uses ground truth for drone positioning while the other follows from fixed-camera image detections.
 
 ## ⚠️ Troubleshooting
 
