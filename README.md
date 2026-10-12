@@ -366,7 +366,6 @@ car_drone_ws/
 ├── THIRD_PARTY_NOTICES.md
 ├── docs/
 │   ├── ARCHITECTURE.md
-│   ├── RESULTS_LOG_TEMPLATE.md
 │   └── media/                  # Add screenshots/demo links here
 └── src/
     ├── car_lane_following/     # Supporting lane-following source
