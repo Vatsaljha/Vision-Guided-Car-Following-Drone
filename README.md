@@ -13,14 +13,11 @@ A ROS 2 Humble and Gazebo Classic simulation of a Prius-style car followed by a 
 <!-- PROJECT_MEDIA_GALLERY_START -->
 ## Simulation Gallery
 
+### Complete Simulation
 ![Full simulation overview](media/images/simulation_overview.png)
 
-*Gazebo Classic environment with the car and drone.*
-
 ### Mode 1 — Cinematic Shot (Ground Truth)
-
-The drone uses Gazebo ground-truth information for cinematic positioning,
-while the gimbal and camera controllers aim the view toward the car.
+The drone uses Gazebo ground-truth information for cinematic tracking and positioning.
 
 ![Cinematic ground-truth tracking](media/images/mode1_cinematic_shot.png)
 
@@ -29,16 +26,13 @@ while the gimbal and camera controllers aim the view toward the car.
 **Demo:** [Watch the cinematic mode video](media/videos/mode1_cinematic_demo.mp4)
 
 ### Mode 2 — Fixed-Camera Visual Following
+The drone uses its fixed camera to detect ArUco marker ID 7 on the car and follow it visually.
 
-The fixed camera detects roof-mounted ArUco marker ID 7. The visual-following
-controller uses the detection to guide the drone toward the car.
+![ArUco detection in the fixed camera](media/images/mode2_aruco_detection.png)
 
-![Fixed-camera ArUco detection](media/images/mode2_aruco_detection.png)
-
-![Car following in Gazebo](media/images/mode2_visual_following.png)
+![Car following simulation](media/images/mode2_visual_following.png)
 
 **Demo:** [Watch the fixed-camera visual-following video](media/videos/mode2_visual_follow_demo.mp4)
-
 <!-- PROJECT_MEDIA_GALLERY_END -->
 
 ## Project status
