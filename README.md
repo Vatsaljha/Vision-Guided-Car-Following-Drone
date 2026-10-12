@@ -1,4 +1,4 @@
-# 🚗🎬 Car-Following Drone Simulation — ROS 2 + Gazebo Classic
+# 🚗🎬 Car-Following Drone — ROS 2 + Gazebo Classic
 
 A ROS 2 Humble and Gazebo Classic simulation of a Prius-style car followed by a drone. The repository contains **two different drone operating modes**: a **ground-truth cinematic-shot mode** and a **fixed-camera visual-following mode**. The car's lane-following nodes provide autonomous motion in the test world.
 
