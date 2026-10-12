@@ -10,16 +10,38 @@ A ROS 2 Humble and Gazebo Classic simulation of a Prius-style car followed by a 
 </p>
 
 > **Important:** Mode 1 and Mode 2 are two different ways to control the drone's follow behaviour. Do not start both modes at the same time; their launch files spawn their own simulation entities and their controllers can compete for control of the drone.
+<!-- PROJECT_MEDIA_GALLERY_START -->
+## Simulation Gallery
 
-## 📸 Screenshots and demo video
+![Full simulation overview](media/images/simulation_overview.png)
 
-Add your own screenshots and demo video here after recording them from Gazebo. Do not use placeholder images as though they are results from your simulation.
+*Gazebo Classic environment with the car and drone.*
 
-| Mode 1 — ground-truth cinematic shot | Mode 2 — fixed-camera visual following |
-|---|---|
-| Add a cinematic view showing the car, drone, and camera framing. | Add a Gazebo view and a `/drone/car_debug` image showing ArUco ID 7. |
+### Mode 1 — Cinematic Shot (Ground Truth)
 
-Suggested location: `docs/media/`. GitHub can render images committed to that folder. For a video, link a YouTube/demo URL or add a suitably sized MP4 if repository limits and asset licences allow it.
+The drone uses Gazebo ground-truth information for cinematic positioning,
+while the gimbal and camera controllers aim the view toward the car.
+
+![Cinematic ground-truth tracking](media/images/mode1_cinematic_shot.png)
+
+![Gimbal camera view](media/images/mode1_gimbal_view.png)
+
+**Demo:** [Watch the cinematic mode video](media/videos/mode1_cinematic_demo.mp4)
+
+### Mode 2 — Fixed-Camera Visual Following
+
+The fixed camera detects roof-mounted ArUco marker ID 7. The visual-following
+controller uses the detection to guide the drone toward the car.
+
+![Fixed-camera ArUco detection](media/images/mode2_aruco_detection.png)
+
+![Car following in Gazebo](media/images/mode2_visual_following.png)
+
+**Demo:** [Watch the fixed-camera visual-following video](media/videos/mode2_visual_follow_demo.mp4)
+
+<!-- PROJECT_MEDIA_GALLERY_END -->
+
+## Project status
 
 ## ✨ Main features
 
